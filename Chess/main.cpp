@@ -52,6 +52,7 @@ Key Members:  One string named type; type holds the values for the piece
 class ChessPiece {
 protected:
 	int materialValue;
+	int maxDistance;
 	string type = "  ";
 	sf::Vector2f imagePos;
 	sf::Vector2f pos;
@@ -95,16 +96,25 @@ public:
 	sf::FloatRect getGlobalBounds() {
 		return sprite.getGlobalBounds();
 	}
+	int getMaxDistance() {
+		return maxDistance;
+	}
 };
 
 class Pawn : public ChessPiece {
 public:
 	Pawn(string _type, sf::Vector2f _pos, sf::Vector2f _squareSize) {
 		materialValue = 0;
+		maxDistance = 1;
 		pos = _pos;
 		imagePos = sf::Vector2f(_pos.x * _squareSize.x, _pos.y * _squareSize.y);
 		type = _type;
 
+		if (type[1] == 'w') 
+			path.push_back(sf::Vector2i(0, -1));
+		if (type[1] == 'b')
+			path.push_back(sf::Vector2i(0, 1));
+		
 		if (_type == "pw")
 			area = sf::IntRect(225, 0, 45, 45);
 		if (_type == "pb")
@@ -116,6 +126,7 @@ class Bishop : public ChessPiece {
 public:
 	Bishop(string _type, sf::Vector2f _pos, sf::Vector2f _squareSize) {
 		materialValue = 3;
+		maxDistance = 7;
 		pos = _pos;
 		imagePos = sf::Vector2f(_pos.x * _squareSize.x, _pos.y * _squareSize.y);
 		type = _type;
@@ -136,6 +147,7 @@ class Knight : public ChessPiece {
 public:
 	Knight(string _type, sf::Vector2f _pos, sf::Vector2f squareSize) {
 		materialValue = 3;
+		maxDistance = 1;
 		pos = _pos;
 		imagePos = sf::Vector2f(_pos.x * squareSize.x, _pos.y * squareSize.y);
 		type = _type;
@@ -160,6 +172,7 @@ class Rook : public ChessPiece {
 public:
 	Rook(string _type, sf::Vector2f _pos, sf::Vector2f _squareSize) {
 		materialValue = 5;
+		maxDistance = 7;
 		pos = _pos;
 		imagePos = sf::Vector2f(_pos.x * _squareSize.x, _pos.y * _squareSize.y);
 		type = _type;
@@ -180,6 +193,7 @@ class Queen : public ChessPiece {
 public:
 	Queen(string _type, sf::Vector2f _pos, sf::Vector2f _squareSize) {
 		materialValue = 9;
+		maxDistance = 7;
 		pos = _pos;
 		imagePos = sf::Vector2f(_pos.x * _squareSize.x, _pos.y * _squareSize.y);
 		type = _type;
@@ -204,6 +218,7 @@ class King : public ChessPiece {
 public:
 	King(string _type, sf::Vector2f _pos, sf::Vector2f _squareSize) {
 		materialValue = 3;
+		maxDistance = 1;
 		pos = _pos;
 		imagePos = sf::Vector2f(_pos.x * _squareSize.x, _pos.y * _squareSize.y);
 		type = _type;
@@ -364,21 +379,16 @@ public:
 				row.push_back(temp);
 			tiles.push_back(row);
 		}
-
-		initiateBoard(scalar);
-		
+		initiateBoard(scalar);	
 	}
 	
 	bool getHasValidMove() {
 		return hasValidMove;
 	}
-	bool inBounds(int i, int j, int x, int y) {
-		return (i + x >= 0 && i + x <= 7 && j + y >= 0 && j + y <= 7);
+	bool inBounds(int i, int j) {
+		return (i >= 0 && i <= 7 && j >= 0 && j <= 7);
 	}
 	bool isOpposing(ChessPiece p1, ChessPiece p2) {
-		return (p1.getType()[1] != p2.getType()[1]);
-	}
-	bool isOpposingPiece(ChessPiece p1, ChessPiece p2) {
 		return (p1.getType()[1] != p2.getType()[1]);
 	}
 	bool mouseClickedonTile(Tile &t, sf::FloatRect mouse) {
@@ -394,88 +404,17 @@ public:
 		return tile.piece.getPath()[n];
 	}
 	void calculateValidMoves(Tile tile) {
-		int limitedDistance = 8;
+		int maxDistance;
 		int i = tile.getPosition().x;
 		int j = tile.getPosition().y;
 		currentValidMoves.clear();
 		validateBoard();
 
-		switch (tile.piece.getType()[0]) {
-			case 'p': {
-				if (tile.piece.getType()[1] == 'b') {
-					if (tiles[i][j].piece.getPosition().y == 1) {
-						limitedDistance = 2;
-						displayValidMoves(i, j, 0, 1, limitedDistance, tiles, tile.piece);
-					}
-					else {
-						limitedDistance = 1;
-						displayValidMoves(i, j, 0, 1, limitedDistance, tiles, tile.piece);
-					}
-				}
-				if (tile.piece.getType()[1] == 'w') {
-					if (tiles[i][j].piece.getPosition().y == 6) {
-						limitedDistance = 2;
-						displayValidMoves(i, j, 0, -1, limitedDistance, tiles, tile.piece);
-					}
-					else {
-						limitedDistance = 1;
-						displayValidMoves(i, j, 0, -1, limitedDistance, tiles, tile.piece);
-					}
-				}
-				tiles[i][j].square.setFillColor(sf::Color(0, 255, 255));
-				break;
-			}
-			case 'b': {
-				if (tile.piece.getPosition().x == i && tile.piece.getPosition().y == j) {
-					for (int n = 0; n < tile.piece.getPath().size(); n++) {
-						limitedDistance = 7;
-						displayValidMoves(i, j, getPath(tile, n).x, getPath(tile, n).y, limitedDistance, tiles, tile.piece);
-					}
-					tiles[i][j].square.setFillColor(sf::Color(0, 255, 255));
-				}
-				break;
-			}
-			case 'n': {
-				if (tile.piece.getPosition().x == i && tile.piece.getPosition().y == j) {
-					for (int n = 0; n < tile.piece.getPath().size(); n++) {
-						limitedDistance = 1;
-						displayValidMoves(i, j, getPath(tile, n).x, getPath(tile, n).y, limitedDistance, tiles, tile.piece);
-					}
-					tiles[i][j].square.setFillColor(sf::Color(0, 255, 255));
-				}
-				break;
-			}
-			case 'r': {
-				if (tile.piece.getPosition().x == i && tile.piece.getPosition().y == j) {
-					for (int n = 0; n < tile.piece.getPath().size(); n++) {
-						limitedDistance = 7;
-						displayValidMoves(i, j, getPath(tile, n).x, getPath(tile, n).y, limitedDistance, tiles, tile.piece);
-					}
-					tiles[i][j].square.setFillColor(sf::Color(0, 255, 255));
-				}
-				break;
-			}
-			case 'q': {
-				if (tile.piece.getPosition().x == i && tile.piece.getPosition().y == j) {
-					for (int n = 0; n < tile.piece.getPath().size(); n++) {
-						limitedDistance = 7;
-						displayValidMoves(i, j, getPath(tile, n).x, getPath(tile, n).y, limitedDistance, tiles, tile.piece);
-					}
-					tiles[i][j].square.setFillColor(sf::Color(0, 255, 255));
-				}
-				break;
-			}
-			case 'k': {
-				if (tile.piece.getPosition().x == i && tile.piece.getPosition().y == j) {
-					for (int n = 0; n < tile.piece.getPath().size(); n++) {
-						limitedDistance = 1;
-						displayValidMoves(i, j, getPath(tile, n).x, getPath(tile, n).y, limitedDistance, tiles, tile.piece);
-					}
-					tiles[i][j].square.setFillColor(sf::Color(0, 255, 255));
-				}
-				break;
-			}
+		for (int n = 0; n < tile.piece.getPath().size(); n++) {
+			maxDistance = tile.piece.getMaxDistance();
+			displayValidMoves(i, j, getPath(tile, n).x, getPath(tile, n).y, maxDistance, tiles, tile.piece);
 		}
+		tiles[i][j].square.setFillColor(sf::Color(0, 255, 255));
 	}
 	void clearHighlightedTiles(){
 		for (int i = 0; i < 8; i++)
@@ -512,61 +451,47 @@ public:
 			iter = 0;
 	}
 	void displayValidMoves(int i, int j, int x, int y, int &distance, vector<vector<Tile>> &tiles, ChessPiece piece) {
+		if (piece.getType() == "pw" && j == 6)
+			distance++;
+		if (piece.getType() == "pb" && j == 1)
+			distance++;
+		
 		i += x;
 		j += y;
-		if (piece.getType()[0] != 'n' && piece.getType()[0] != 'p' && inBounds(i, j, 0, 0) && distance > 0) {
-			if (!tiles[i][j].isOccupied) {
+		if(inBounds(i, j) && distance > 0) {
+			if(!tiles[i][j].isOccupied) {
 				fillGreen(tiles[i][j]);
 				distance--;
 				displayValidMoves(i, j, x, y, distance, tiles, piece);
 			}
-			if (tiles[i][j].isOccupied && isOpposing(piece, tiles[i][j].piece)) {
+			if(tiles[i][j].isOccupied && isOpposing(piece, tiles[i][j].piece)) {
+				cout << "make it yellow" << endl;
 				fillYellow(tiles[i][j]);
 				distance = 0;
-				displayValidMoves(i, j, x, y, distance, tiles, piece);
-			}
-			if (tiles[i][j].isOccupied && !isOpposing(piece, tiles[i][j].piece)) {
-				fillRed(tiles[i][j]);
-				distance = 0;
-				displayValidMoves(i, j, x, y, distance, tiles, piece);
-			}
-		}
-		if (piece.getType()[0] == 'n' && inBounds(i, j, 0, 0) && distance > 0) {
-			if (!tiles[i][j].isOccupied) {
-				fillGreen(tiles[i][j]);
-				distance--;
-				displayValidMoves(i, j, x, y, distance, tiles, piece);
-			}
-			if (tiles[i][j].isOccupied && !isOpposing(piece, tiles[i][j].piece)) {
-				fillRed(tiles[i][j]);
-				distance = 0;
-				displayValidMoves(i, j, x, y, distance, tiles, piece);
-			}
-			if (tiles[i][j].isOccupied && isOpposing(piece, tiles[i][j].piece)) {
-				fillYellow(tiles[i][j]);
-				distance = 0;
-				displayValidMoves(i, j, x, y, distance, tiles, piece);
-			}
-		}
-		if (piece.getType()[0] == 'p' && inBounds(i, j, 0, 0) && distance > 0) {
-			if (!tiles[i][j].isOccupied) {
-				fillGreen(tiles[i][j]);
-				distance--;
-				displayValidMoves(i, j, x, y, distance, tiles, piece);
-			}
-			if (i + 1 >= 0 && i + 1 <= 7)
-				if ((tiles[i + 1][j].isOccupied) && isOpposing(piece, tiles[i + 1][j].piece)) {
-					fillYellow(tiles[i + 1][j]);
+				if (piece.getType()[0] == 'p') {
+					cout << "make it red" << endl;
+					fillRed(tiles[i][j]);
+					
 				}
-			if (i - 1 >= 0 && i - 1 <= 7)
-				if ((tiles[i - 1][j].isOccupied) && isOpposing(piece, tiles[i - 1][j].piece)) {
+				displayValidMoves(i, j, x, y, distance, tiles, piece);	
+			}
+			if(tiles[i][j].isOccupied && !isOpposing(piece, tiles[i][j].piece)) {
+				fillRed(tiles[i][j]);
+				distance = 0;
+				displayValidMoves(i, j, x, y, distance, tiles, piece);
+			}
+			if (inBounds(i + 1, j) && piece.getType()[0] == 'p')
+				if (tiles[i + 1][j].isOccupied) {
+					if (isOpposing(piece, tiles[i + 1][j].piece))
+						fillYellow(tiles[i + 1][j]);
+					distance = 0;
+				}
+			if (inBounds(i - 1, j) && piece.getType()[0] == 'p')
+				if (tiles[i - 1][j].isOccupied && isOpposing(piece, tiles[i][j].piece)) {
 					fillYellow(tiles[i - 1][j]);
+					distance = 0;
 				}
-			if (tiles[i][j].isOccupied) {
-				fillRed(tiles[i][j]);
-				distance = 0;
-				displayValidMoves(i, j, x, y, distance, tiles, piece);
-			}
+			displayValidMoves(i, j, x, y, distance, tiles, piece);
 		}
 	}
 	void draw(sf::RenderWindow &window) {
@@ -611,11 +536,11 @@ public:
 	}
 	void highlightValidTiles() {
 		for (int i = 0; i < 8; i++)
-			for (int j = 0; j < 8; j++) {
+			for (int j = 0; j < 8; j++) 
 				if (tiles[i][j].isValid) {
 					tiles[i][j].square.setFillColor(sf::Color::Transparent);
 				}
-			}
+			
 	}
 	//Set chessboard tiles along with their positions, sprite positions, piece positions and coorisponding colors.
 	void initiateBoard(const int &scalar) {
@@ -630,7 +555,7 @@ public:
 	}
 	void movePiece(Tile &t1, Tile &t2) {
 		sf::Vector2f newPosition = sf::Vector2f(tiles[t2.getPosition().x][t2.getPosition().y].getPosition());
-		if (isOpposingPiece(t1.piece, t2.piece)) {
+		if (isOpposing(t1.piece, t2.piece)) {
 			swap(tiles[t2.getPosition().x][t2.getPosition().y].piece, tiles[t1.getPosition().x][t1.getPosition().y].piece);
 			tiles[t2.getPosition().x][t2.getPosition().y].piece.setPostion(newPosition);
 			tiles[t2.getPosition().x][t2.getPosition().y].isOccupied = true;
