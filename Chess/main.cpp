@@ -6,7 +6,7 @@ Date started:  October 1, 2019
 Synopsis:      This applet is a chess game interface using SFML.
 			   The current version of this applet allows the user
 			   to play as white against the black opponent. As of
-			   now the AI is completely random.  
+			   now the AI is completely random.
 ********************************************************************/
 #include <iostream>
 #include <vector>
@@ -19,31 +19,32 @@ Synopsis:      This applet is a chess game interface using SFML.
 #include <SFML/Window.hpp>
 
 using namespace std;
+
 /*******************************************************************
 Class:        ChessPiece
 
 Children:     Pawn, Bishop, Knight, Rook, Queen, King.
 
-Use:          This is the base class for all chess pieces. 
-              It holds the SFML fields that are responsible for the 
+Use:          This is the base class for all chess pieces.
+			  It holds the SFML fields that are responsible for the
 			  piece sprites. Every chess piece will be loaded from the
 			  same png image but from a different bounded region of that
-			  image. Every chess piece type will be determined by a two 
-			  character string where the first character is the piece 
+			  image. Every chess piece type will be determined by a two
+			  character string where the first character is the piece
 			  type and the second is the piece color. For example, 'pw'
 			  refers to a white pawn and 'rb' refers to a black rook.
-			
+
 
 Key Members:  One string named type; type holds the values for the piece
-              type and color. 
+			  type and color.
 
 			  One integer named materialValue; materialValue is a
-			  numerical value for each piece. This is used for determining 
+			  numerical value for each piece. This is used for determining
 			  best moves.
 
 			  One vector of sfml intger pairs (sf::vector2i) named path;
-			  path holds what essentially are directions where the piece 
-			  can move. These values will be passed into a recursive 
+			  path holds what essentially are directions where the piece
+			  can move. These values will be passed into a recursive
 			  function later on.
 
 ********************************************************************/
@@ -80,8 +81,6 @@ public:
 		return path;
 	}
 	void setPostion(sf::Vector2f _pos) {
-		cout << "image pos" << imagePos.x << ", " << imagePos.y << endl;
-		cout << "pos" << _pos.x << ", " << _pos.y << endl;
 		imagePos = sf::Vector2f(_pos.x * getSquareSize().x, _pos.y * getSquareSize().y);
 		pos = _pos;
 	}
@@ -109,11 +108,11 @@ public:
 		imagePos = sf::Vector2f(_pos.x * _squareSize.x, _pos.y * _squareSize.y);
 		type = _type;
 
-		if (type[1] == 'w') 
+		if (type[1] == 'w')
 			path.push_back(sf::Vector2i(0, -1));
 		if (type[1] == 'b')
 			path.push_back(sf::Vector2i(0, 1));
-		
+
 		if (_type == "pw")
 			area = sf::IntRect(225, 0, 45, 45);
 		if (_type == "pb")
@@ -221,7 +220,7 @@ public:
 		pos = _pos;
 		imagePos = sf::Vector2f(_pos.x * _squareSize.x, _pos.y * _squareSize.y);
 		type = _type;
-	
+
 		path.push_back(sf::Vector2i(1, 1));
 		path.push_back(sf::Vector2i(-1, 1));
 		path.push_back(sf::Vector2i(1, -1));
@@ -245,7 +244,8 @@ Children:     None.
 
 Use:          This class is the essential building block of the chessboard.
 			  Tile tells you what piece it's currently holding, it's own unique
-			  position, if it's occupied, and if it's valid for move decisons. 
+			  position, if it's occupied, and if it's valid for move decisons.
+
 
 Key Members:  One string named type; type holds the values for the piece
 			  type and color.
@@ -268,14 +268,14 @@ public:
 	bool hasValidMove = false;
 	bool isOccupied;
 	bool isValid = false;
-	
+
 	Tile() {
 		cout << "Tile created as empty." << endl;
 	}
 	void setPiece(ChessPiece _piece) {
 		piece = _piece;
 	}
-	void setPieceByType(const string &type, sf::Vector2f pos, sf::Vector2f squareSize) {
+	void setPieceByType(const string& type, sf::Vector2f pos, sf::Vector2f squareSize) {
 		isOccupied = true;
 		if (type == "pw") {
 			piece = Pawn(type, pos, squareSize);
@@ -339,7 +339,7 @@ private:
 		{1, 0, 1, 0, 1, 0, 1, 0},
 		{0, 1, 0, 1, 0, 1, 0, 1},
 	};
-	const string piecePlacement[8][8] = {
+	const string pieces[8][8] = {
 		{"rb","nb","bb","qb","kb","bb","nb","rb"},
 		{"pb","pb","pb","pb","pb","pb","pb","pb"},
 		{"  ","  ","  ","  ","  ","  ","  ","  "},
@@ -353,11 +353,11 @@ private:
 public:
 	int iter = 0;
 	int turn = 0;
+	int scalar;
 	char turnColor;
 	bool hasValidMove;
 	vector<vector<Tile>> tiles;
 	vector<Tile> currentValidMoves;
-	vector<Tile> randomValidMoves;
 	vector<Tile> tileSelection;
 	vector<Tile> oppTiles;
 	vector<Tile> row;
@@ -369,38 +369,84 @@ public:
 	Chessboard() {
 	}
 	Chessboard(unsigned int height) {
-		int scalar = height / 8;
+		scalar = height / 8;
 		sf::Vector2i squareSize = sf::Vector2i(scalar, scalar);
+		tiles = vector<vector<Tile>>(8, vector<Tile>(8, Tile()));
+		clearHighlightedTiles();
 
 		for (int i = 0; i < 8; i++) {
-			for (int j = 0; j < 8; j++)
+			for (int j = 0; j < 8; j++) {
 				row.push_back(temp);
+				initiateTile(scalar, i, j);
+			}
 			tiles.push_back(row);
 		}
-		initiateBoard(scalar);	
 	}
-	
-	bool getHasValidMove() {
-		return hasValidMove;
-	}
+
 	bool inBounds(int i, int j) {
 		return (i >= 0 && i <= 7 && j >= 0 && j <= 7);
 	}
+
 	bool isOpposing(ChessPiece p1, ChessPiece p2) {
 		return (p1.getType()[1] != p2.getType()[1]);
 	}
-	bool mouseClickedonTile(Tile &t, sf::FloatRect mouse) {
-		bool mouseOnPiece = mouse.intersects(t.piece.getSprite().getGlobalBounds());
-		bool mouseOnTile = mouse.intersects(t.square.getGlobalBounds());
-		return (mouseOnPiece || mouseOnTile);
+
+	void fillGreen(Tile& t) {
+		t.square.setFillColor(sf::Color::Green);
+		t.isValid = true;
+		hasValidMove = true;
+		currentValidMoves.push_back(t);
 	}
-	bool tracebackPeerSupport(Tile &tile) {
-		calculateValidMoves(tile);
-		return false;
+
+	void fillRed(Tile& t) {
+		t.square.setFillColor(sf::Color::Red);
+		t.isValid = false;
+		hasValidMove = false;
 	}
-	sf::Vector2i getPath(Tile &tile, int &n) {
+
+	void fillYellow(Tile& t) {
+		t.square.setFillColor(sf::Color::Yellow);
+		t.isValid = true;
+		hasValidMove = true;
+		currentValidMoves.push_back(t);
+	}
+
+	void validateBoard() {
+		for (int i = 0; i < 8; i++)
+			for (int j = 0; j < 8; j++)
+				tiles[i][j].isValid = false;
+	}
+
+	void validateOppTiles(vector<Tile> & _tiles) {
+		_tiles.clear();
+		for (int i = 0; i < 8; i++)
+			for (int j = 0; j < 8; j++)
+				if (tiles[i][j].piece.getType()[1] == 'b')
+					_tiles.push_back(tiles[i][j]);
+	}
+
+	void draw(sf::RenderWindow& window) {
+		for (int i = 0; i < 8; i++)
+			for (int k = 0; k < 8; k++) {
+				window.draw(tiles[i][k].square);
+				window.draw(tiles[i][k].piece.getSprite());
+			}
+	}
+
+	void clearHighlightedTiles() {
+		for (int i = 0; i < 8; i++)
+			for (int j = 0; j < 8; j++) {
+				if (color[i][j] == 1)
+					tiles[i][j].square.setFillColor(sf::Color::White);
+				else
+					tiles[i][j].square.setFillColor(sf::Color(120, 120, 120));
+			}
+	}
+
+	sf::Vector2i getPath(Tile& tile, int& n) {
 		return tile.piece.getPath()[n];
 	}
+
 	void calculateValidMoves(Tile tile) {
 		int maxDistance;
 		int i = tile.getPosition().x;
@@ -414,15 +460,7 @@ public:
 		}
 		tiles[i][j].square.setFillColor(sf::Color(0, 255, 255));
 	}
-	void clearHighlightedTiles(){
-		for (int i = 0; i < 8; i++)
-			for (int j = 0; j < 8; j++) {
-				if (color[i][j] == 1)
-					tiles[i][j].square.setFillColor(sf::Color::White);
-				else
-					tiles[i][j].square.setFillColor(sf::Color(120, 120, 120));
-			}
-		}
+	
 	void computeRandomMove() {
 		int rp;
 		time = clock.getElapsedTime();
@@ -445,35 +483,34 @@ public:
 			clock.restart();
 		}
 		rp = rand() % oppTiles.size();
-		if (iter >= oppTiles.size()) 
+		if (iter >= oppTiles.size())
 			iter = 0;
 	}
-	void displayValidMoves(int i, int j, int x, int y, int &distance, vector<vector<Tile>> &tiles, ChessPiece piece) {
+
+	void displayValidMoves(int i, int j, int x, int y, int& distance, vector<vector<Tile>>& tiles, ChessPiece piece) {
 		if (piece.getType() == "pw" && j == 6)
 			distance++;
 		if (piece.getType() == "pb" && j == 1)
 			distance++;
-		
+
 		i += x;
 		j += y;
-		if(inBounds(i, j) && distance > 0) {
-			if(!tiles[i][j].isOccupied) {
+		if (inBounds(i, j) && distance > 0) {
+			if (!tiles[i][j].isOccupied) {
 				fillGreen(tiles[i][j]);
 				distance--;
 				displayValidMoves(i, j, x, y, distance, tiles, piece);
 			}
-			if(tiles[i][j].isOccupied && isOpposing(piece, tiles[i][j].piece)) {
-				cout << "make it yellow" << endl;
+			if (tiles[i][j].isOccupied && isOpposing(piece, tiles[i][j].piece)) {
 				fillYellow(tiles[i][j]);
 				distance = 0;
 				if (piece.getType()[0] == 'p') {
-					cout << "make it red" << endl;
 					fillRed(tiles[i][j]);
-					
+
 				}
-				displayValidMoves(i, j, x, y, distance, tiles, piece);	
+				displayValidMoves(i, j, x, y, distance, tiles, piece);
 			}
-			if(tiles[i][j].isOccupied && !isOpposing(piece, tiles[i][j].piece)) {
+			if (tiles[i][j].isOccupied && !isOpposing(piece, tiles[i][j].piece)) {
 				fillRed(tiles[i][j]);
 				distance = 0;
 				displayValidMoves(i, j, x, y, distance, tiles, piece);
@@ -492,66 +529,15 @@ public:
 			displayValidMoves(i, j, x, y, distance, tiles, piece);
 		}
 	}
-	void draw(sf::RenderWindow &window) {
-		for (int i = 0; i < 8; i++)
-			for (int k = 0; k < 8; k++) {
-				window.draw(tiles[i][k].square);
-				window.draw(tiles[i][k].piece.getSprite());
-			}
+	
+	void initiateTile(const int& scalar, const int &i, const int &j) {
+		tiles[i][j].setPostion(sf::Vector2i(i, j));
+		tiles[i][j].square.setSize(sf::Vector2f(scalar, scalar));
+		tiles[i][j].square.setPosition(sf::Vector2f(i * scalar, j * scalar));
+		tiles[i][j].setPieceByType(pieces[j][i], sf::Vector2f(tiles[i][j].getPosition()), tiles[i][j].square.getSize());
 	}
-	void fillGreen(Tile &t) {
-		t.square.setFillColor(sf::Color::Green);
-		t.isValid = true;
-		hasValidMove = true;
-		currentValidMoves.push_back(t);
-		}
-	void fillRed(Tile &t) {
-		t.square.setFillColor(sf::Color::Red);
-		t.isValid = false;
-		hasValidMove = false;
-	}
-	void fillYellow(Tile &t) {
-		t.square.setFillColor(sf::Color::Yellow);
-		t.isValid = true;
-		hasValidMove = true;
-		currentValidMoves.push_back(t);
-	}
-	void filterOutInvalidMoves(vector<Tile> in, vector<Tile> &out) {
-		for(int i = 0; i < in.size(); i++){
-			currentValidMoves.clear();
-			calculateValidMoves(in[i]);
-			if (currentValidMoves.size() > 0)
-				out.push_back(in[i]);
-		}
-	}
-	void filterValid(vector<Tile> & in, vector<Tile> &out) {
-		for (int i = 0; i < in.size(); i++) {
-			calculateValidMoves(in[i]);
-			if (currentValidMoves.size() <= 0) {
-				out.push_back(in[i]);
-			}
-		}
-	}
-	void highlightValidTiles() {
-		for (int i = 0; i < 8; i++)
-			for (int j = 0; j < 8; j++) 
-				if (tiles[i][j].isValid) {
-					tiles[i][j].square.setFillColor(sf::Color::Transparent);
-				}
-			
-	}
-	//Set chessboard tiles along with their positions, sprite positions, piece positions and coorisponding colors.
-	void initiateBoard(const int &scalar) {
-		for (int i = 0; i < 8; i++)
-			for (int j = 0; j < 8; j++) {
-				clearHighlightedTiles();
-				tiles[i][j].setPostion(sf::Vector2i(i, j));
-				tiles[i][j].square.setSize(sf::Vector2f(scalar, scalar));
-				tiles[i][j].square.setPosition(sf::Vector2f(i * scalar, j * scalar));
-				tiles[i][j].setPieceByType(piecePlacement[j][i], sf::Vector2f(tiles[i][j].getPosition()), tiles[i][j].square.getSize());
-			}
-	}
-	void movePiece(Tile &t1, Tile &t2) {
+
+	void movePiece(Tile& t1, Tile& t2) {
 		sf::Vector2f newPosition = sf::Vector2f(tiles[t2.getPosition().x][t2.getPosition().y].getPosition());
 		if (isOpposing(t1.piece, t2.piece)) {
 			swap(tiles[t2.getPosition().x][t2.getPosition().y].piece, tiles[t1.getPosition().x][t1.getPosition().y].piece);
@@ -563,22 +549,23 @@ public:
 			turn++;
 		}
 	}
+
 	void onClick(sf::Vector2i mCoord) {
 		sf::FloatRect mouse;
 		mouse = sf::FloatRect(mCoord.x, mCoord.y, 1, 1);
+		int i = ceil(mCoord.x / scalar);
+		int j = ceil(mCoord.y / scalar);
 
 		if (turn % 2 == 0)
 			turnColor = 'w';
 		else
 			turnColor = 'b';
 
-		for (int i = 0; i < 8; i++)
-			for (int j = 0; j < 8; j++)
-				if (mouseClickedonTile(tiles[i][j], mouse)) {
-					clearHighlightedTiles();
-					tileSelection.push_back(tiles[i][j]);
-					calculateValidMoves(tiles[i][j]);
-				}
+		if (i < 8) {
+			clearHighlightedTiles();
+			tileSelection.push_back(tiles[i][j]);
+			calculateValidMoves(tiles[i][j]);
+		}
 
 		if (tileSelection.size() == 2) {
 			clearHighlightedTiles();
@@ -588,18 +575,6 @@ public:
 			}
 			tileSelection.clear();
 		}
-	}
-	void validateBoard() {
-		for (int i = 0; i < 8; i++)
-			for (int j = 0; j < 8; j++)
-				tiles[i][j].isValid = false;
-	}
-	void validateOppTiles(vector<Tile> &_tiles) {
-		_tiles.clear();
-		for (int i = 0; i < 8; i++)
-			for (int j = 0; j < 8; j++)
-				if (tiles[i][j].piece.getType()[1] == 'b')
-					_tiles.push_back(tiles[i][j]);
 	}
 };
 
