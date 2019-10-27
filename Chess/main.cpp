@@ -19,7 +19,6 @@ Synopsis:      This applet is a chess game interface using SFML.
 #include <SFML/Window.hpp>
 
 using namespace std;
-
 /*******************************************************************
 Class:        ChessPiece
 
