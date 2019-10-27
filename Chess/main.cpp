@@ -248,7 +248,6 @@ Use:          This class is the essential building block of the chessboard.
 			  Tile tells you what piece it's currently holding, it's own unique
 			  position, if it's occupied, and if it's valid for move decisons. 
 
-
 Key Members:  One string named type; type holds the values for the piece
 			  type and color.
 
