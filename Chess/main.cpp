@@ -1,12 +1,12 @@
 /*******************************************************************
-Programmer:    Noah Rix
+Programmer:     Noah Rix
 
-Date started:  October 1, 2019
+Date started:   October 1, 2019
 
-Synopsis:      This applet is a chess game interface using SFML.
-			   The current version of this applet allows the user
-			   to play as white against the black opponent. As of
-			   now the AI is completely random.
+Synopsis:       This applet is a chess game interface using SFML.
+		The current version of this applet allows the user
+		to play as white against the black opponent. As of
+		now the AI is completely random.
 ********************************************************************/
 #include <iostream>
 #include <vector>
@@ -21,31 +21,31 @@ Synopsis:      This applet is a chess game interface using SFML.
 using namespace std;
 
 /*******************************************************************
-Class:        ChessPiece
+Class:          ChessPiece
 
-Children:     Pawn, Bishop, Knight, Rook, Queen, King.
+Children:       Pawn, Bishop, Knight, Rook, Queen, King.
 
-Use:          This is the base class for all chess pieces.
-			  It holds the SFML fields that are responsible for the
-			  piece sprites. Every chess piece will be loaded from the
-			  same png image but from a different bounded region of that
-			  image. Every chess piece type will be determined by a two
-			  character string where the first character is the piece
-			  type and the second is the piece color. For example, 'pw'
-			  refers to a white pawn and 'rb' refers to a black rook.
+Use:            This is the base class for all chess pieces.
+		It holds the SFML fields that are responsible for the
+		piece sprites. Every chess piece will be loaded from the
+		same png image but from a different bounded region of that
+		image. Every chess piece type will be determined by a two
+		character string where the first character is the piece
+		type and the second is the piece color. For example, 'pw'
+		refers to a white pawn and 'rb' refers to a black rook.
 
 
-Key Members:  One string named type; type holds the values for the piece
-			  type and color.
+Key Members:  	One string named type; type holds the values for the piece
+	        type and color.
 
-			  One integer named materialValue; materialValue is a
-			  numerical value for each piece. This is used for determining
-			  best moves.
+	        One integer named materialValue; materialValue is a
+	        numerical value for each piece. This is used for determining
+	        best moves.
 
-			  One vector of sfml intger pairs (sf::vector2i) named path;
-			  path holds what essentially are directions where the piece
-			  can move. These values will be passed into a recursive
-			  function later on.
+	        One vector of sfml intger pairs (sf::vector2i) named path;
+	        path holds what essentially are directions where the piece
+	        can move. These values will be passed into a recursive
+	        function later on.
 
 ********************************************************************/
 
@@ -243,21 +243,21 @@ Class:        Tile
 Children:     None.
 
 Use:          This class is the essential building block of the chessboard.
-			  Tile tells you what piece it's currently holding, it's own unique
-			  position, if it's occupied, and if it's valid for move decisons.
+	      Tile tells you what piece it's currently holding, it's own unique
+	      position, if it's occupied, and if it's valid for move decisons.
 
 
 Key Members:  One string named type; type holds the values for the piece
-			  type and color.
+	      type and color.
 
-			  One integer named materialValue; materialValue is a
-			  numerical value for each piece. This is used for determining
-			  best moves.
+	      One integer named materialValue; materialValue is a
+	      numerical value for each piece. This is used for determining
+	      best moves.
 
-			  One vector of sfml intger pairs (sf::vector2i) named path;
-			  path holds what essentially are directions where the piece
-			  can move. These values will be passed into a recursive
-			  function later on.
+              One vector of sfml intger pairs (sf::vector2i) named path;
+              path holds what essentially are directions where the piece
+              can move. These values will be passed into a recursive
+              function later on.
 ********************************************************************/
 class Tile {
 public:
