@@ -245,19 +245,6 @@ Children:     None.
 Use:          This class is the essential building block of the chessboard.
 	      Tile tells you what piece it's currently holding, it's own unique
 	      position, if it's occupied, and if it's valid for move decisons.
-
-
-Key Members:  One string named type; type holds the values for the piece
-	      type and color.
-
-	      One integer named materialValue; materialValue is a
-	      numerical value for each piece. This is used for determining
-	      best moves.
-
-              One vector of sfml intger pairs (sf::vector2i) named path;
-              path holds what essentially are directions where the piece
-              can move. These values will be passed into a recursive
-              function later on.
 ********************************************************************/
 class Tile {
 public:
